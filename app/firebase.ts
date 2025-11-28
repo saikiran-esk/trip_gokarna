@@ -1,8 +1,6 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
-// TODO: Replace the following with your app's Firebase project configuration
-// See: https://firebase.google.com/docs/web/learn-more#config-object
 const firebaseConfig = {
     apiKey: "AIzaSyB-xeZ2Htvm1kCjPoPsrTJZyfi_TNw8UH0",
     authDomain: "gokarna-2a0ac.firebaseapp.com",
@@ -13,6 +11,6 @@ const firebaseConfig = {
     measurementId: "G-80EK3VMR5V"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase (avoid duplicate initialization)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app);
