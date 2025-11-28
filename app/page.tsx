@@ -5,6 +5,8 @@ import { Expense } from './types';
 import ExpenseCard from './components/ExpenseCard';
 import AddExpenseForm from './components/AddExpenseForm';
 import { Plus, Wallet, TrendingUp } from 'lucide-react';
+import { db } from './firebase';
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -12,26 +14,37 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('gokarna_expenses');
-    if (saved) {
-      setExpenses(JSON.parse(saved));
-    }
     setMounted(true);
+
+    // Subscribe to real-time updates from Firestore
+    const q = query(collection(db, 'expenses'), orderBy('date', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const expensesData: Expense[] = [];
+      snapshot.forEach((doc) => {
+        expensesData.push({ id: doc.id, ...doc.data() } as Expense);
+      });
+      setExpenses(expensesData);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem('gokarna_expenses', JSON.stringify(expenses));
+  const addExpense = async (newExpense: Omit<Expense, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'expenses'), newExpense);
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      alert('Failed to add expense. Please try again.');
     }
-  }, [expenses, mounted]);
-
-  const addExpense = (newExpense: Omit<Expense, 'id'>) => {
-    const expense = { ...newExpense, id: crypto.randomUUID() };
-    setExpenses([expense, ...expenses]);
   };
 
-  const deleteExpense = (id: string) => {
-    setExpenses(expenses.filter(e => e.id !== id));
+  const deleteExpense = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'expenses', id));
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      alert('Failed to delete expense. Please try again.');
+    }
   };
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
