@@ -18,23 +18,10 @@ export default function AddExpenseForm({ onAdd, onClose }: Props) {
     useEffect(() => {
         const fetchTime = async () => {
             try {
-                const response = await fetch('https://worldtimeapi.org/api/timezone/Asia/Kolkata');
+                const response = await fetch('/api/time');
+                if (!response.ok) throw new Error('Failed to fetch time');
                 const data = await response.json();
-                // API returns ISO string with offset, e.g., "2023-11-28T23:30:00.000000+05:30"
-                // We need to format it for datetime-local input: "YYYY-MM-DDTHH:mm"
-                const apiDate = new Date(data.datetime);
-                // Adjust to local time representation of that timezone
-                const istString = apiDate.toLocaleString('en-CA', {
-                    timeZone: 'Asia/Kolkata',
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                }).replace(', ', 'T');
-
-                setDate(istString);
+                setDate(data.datetime);
             } catch (error) {
                 console.error('Failed to fetch time:', error);
                 // Fallback to calculated IST
